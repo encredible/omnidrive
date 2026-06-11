@@ -14,7 +14,7 @@ COPY pyproject.toml README.md ./
 COPY omnidrive/ ./omnidrive/
 
 # Install the Python package and dependencies
-RUN pip install --no-cache-dir . fastapi uvicorn jinja2
+RUN pip install --no-cache-dir . fastapi uvicorn jinja2 wsgidav cheroot
 
 # Expose port
 EXPOSE 8000

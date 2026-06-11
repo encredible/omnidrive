@@ -83,6 +83,9 @@
             
             <!-- Docker/Host mode indicator -->
             <div class="flex items-center gap-3">
+                <span id="os-badge" class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-white/10 glass-card">
+                    Detecting OS...
+                </span>
                 <span id="env-badge" class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-white/10 glass-card">
                     Detecting Environment...
                 </span>
@@ -122,7 +125,7 @@
 
                     <div class="border-t border-white/5 pt-4 flex flex-col gap-2 text-xs text-slate-400">
                         <div class="flex justify-between"><span class="font-light">Mount Point:</span> <span id="mount-path" class="font-mono">/Volumes/OmniDrive</span></div>
-                        <div class="flex justify-between"><span class="font-light">Image:</span> <span id="image-name" class="font-mono text-right truncate max-w-[180px]">OmniDrive_Jack.sparsebundle</span></div>
+                        <div class="flex justify-between"><span class="font-light">Image File:</span> <span id="image-name" class="font-mono text-right truncate max-w-[180px]">OmniDrive_Jack.sparsebundle</span></div>
                     </div>
                 </section>
 
@@ -141,6 +144,37 @@
                     <button id="btn-link" onclick="executeAction('/api/link')" class="w-full py-3.5 px-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-bold rounded-2xl transition duration-300 transform active:scale-98 shadow-xl flex items-center justify-center gap-2">
                         <i class="fa-solid fa-wrench"></i> Repair Symlinks
                     </button>
+                </section>
+                
+                <!-- WebDAV Connection Card -->
+                <section class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-yellow-400 text-lg"></i>
+                        <h2 class="text-lg font-semibold text-slate-300">Network Share (WebDAV)</h2>
+                    </div>
+                    <p class="text-xs text-slate-400">Connect to this virtual storage from iOS, Android, Windows, and Linux.</p>
+                    
+                    <div class="flex flex-col gap-2 mt-2 text-xs">
+                        <div class="bg-black/50 border border-white/5 rounded-xl p-3 flex flex-col gap-1.5 font-mono">
+                            <div class="text-[10px] uppercase text-slate-500">WebDAV URL</div>
+                            <div id="webdav-url" class="text-yellow-400/90 break-all select-all">http://localhost:8000/webdav</div>
+                            <div class="text-[10px] uppercase text-slate-500 mt-1">Credentials</div>
+                            <div class="text-slate-300">User: <span class="text-pink-400 select-all">jack</span> | Pass: <span class="text-pink-400 select-all">wonyoung</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Guide Selector -->
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button onclick="switchGuide('ios')" class="guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition" id="tab-ios">iOS</button>
+                        <button onclick="switchGuide('android')" class="guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition" id="tab-android">Android</button>
+                        <button onclick="switchGuide('win')" class="guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition" id="tab-win">Windows</button>
+                        <button onclick="switchGuide('mac')" class="guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition" id="tab-mac">macOS</button>
+                    </div>
+                    
+                    <!-- Guide text -->
+                    <div id="guide-text" class="text-[10px] text-slate-400 leading-relaxed bg-black/20 border border-white/5 rounded-xl p-3 min-h-[50px]">
+                        Select an OS tab above to view the mounting instructions.
+                    </div>
                 </section>
             </div>
 
@@ -206,6 +240,22 @@
 
     <script>
         const consoleEl = document.getElementById('console-output');
+        
+        // OS Specific Instructions
+        const GUIDES = {
+            ios: "📱 <b>iOS (Files App)</b>:<br>1. Open Files App.<br>2. Click three dots (...) at the top right.<br>3. Select 'Connect to Server'.<br>4. Enter WebDAV URL and tap Connect.<br>5. Choose 'Registered User' and enter user: <b>jack</b>, pass: <b>wonyoung</b>.",
+            android: "🤖 <b>Android (Solid Explorer)</b>:<br>1. Click '+' to add a new connection.<br>2. Select 'WebDAV' as the connection type.<br>3. Enter the WebDAV URL.<br>4. Set Authentication to 'Basic/Digest' and enter user: <b>jack</b>, pass: <b>wonyoung</b>.",
+            win: "🪟 <b>Windows (File Explorer)</b>:<br>1. Open 'This PC'.<br>2. Click 'Map network drive' in the ribbon.<br>3. Enter the WebDAV URL.<br>4. Check 'Connect using different credentials' and enter user: <b>jack</b>, pass: <b>wonyoung</b>.",
+            mac: "🍏 <b>macOS (Finder)</b>:<br>1. Open Finder.<br>2. Click Cmd+K (Go -> Connect to Server).<br>3. Enter the WebDAV URL and click Connect.<br>4. Enter user: <b>jack</b>, pass: <b>wonyoung</b>."
+        };
+
+        function switchGuide(os) {
+            document.querySelectorAll('.guide-tab-btn').forEach(btn => {
+                btn.className = "guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition";
+            });
+            document.getElementById(`tab-${os}`).className = "guide-tab-btn px-2.5 py-1 text-[10px] rounded-lg border border-yellow-500/50 bg-yellow-500/10 text-yellow-400 font-semibold";
+            document.getElementById('guide-text').innerHTML = GUIDES[os];
+        }
 
         function writeLog(message, type = 'INFO') {
             const time = new Date().toLocaleTimeString();
@@ -230,6 +280,16 @@
                 const response = await fetch('/api/status');
                 const data = await response.json();
                 
+                // Dynamically update WebDAV URL using active host IP
+                const activeHost = window.location.hostname;
+                const activePort = window.location.port ? `:${window.location.port}` : '';
+                document.getElementById('webdav-url').textContent = `http://${activeHost}${activePort}/webdav`;
+                
+                // Update OS badge
+                const osBadge = document.getElementById('os-badge');
+                osBadge.textContent = `${data.os} Mode`;
+                osBadge.className = "px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-pink-500/20 bg-pink-950/40 text-pink-300";
+
                 // Update Environment Badge
                 const envBadge = document.getElementById('env-badge');
                 if (data.docker_mode) {
@@ -383,9 +443,9 @@
             }
         }
 
-        // Initialize and poll every 5 seconds
         window.onload = () => {
             fetchStatus();
+            switchGuide('ios'); // default guide
             setInterval(fetchStatus, 5000);
         };
     </script>

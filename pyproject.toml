@@ -17,6 +17,8 @@ dependencies = [
     "fastapi>=0.100.0",
     "uvicorn>=0.20.0",
     "jinja2>=3.0.0",
+    "wsgidav>=4.0.0",
+    "cheroot>=10.0.0",
 ]
 
 [project.scripts]
