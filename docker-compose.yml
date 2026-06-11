@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  omnidrive-web:
+    build: .
+    container_name: omnidrive-web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Map host virtual mount point so container can inspect state and files
+      - /Volumes/OmniDrive:/Volumes/OmniDrive
+      # Map host sparseimage folder to container root home so it can check image existence
+      - /Users/jack/OmniDrive_System:/root/OmniDrive_System
+    environment:
+      - DOCKER_MODE=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

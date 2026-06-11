@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniDrive Control Panel</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: '#d4af37',
+                        amberGold: 'hsl(45, 100%, 50%)',
+                        premiumDark: '#0d0e15',
+                        glassBg: 'rgba(17, 24, 39, 0.7)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05060b;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.03) 0%, transparent 60%);
+        }
+        .glass-card {
+            background: rgba(13, 15, 27, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.8),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.03);
+        }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+        }
+        .pulse-online {
+            animation: pulse-green 2s infinite;
+        }
+        .pulse-offline {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-100 flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Glow Bar -->
+    <div class="h-1 bg-gradient-to-r from-indigo-500 via-yellow-500 to-rose-500 w-full"></div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-6 py-10 flex-1 w-full flex flex-col gap-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight">
+                    <span class="bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 bg-clip-text text-fill-color text-transparent">OmniDrive</span>
+                    <span class="text-lg font-light text-slate-400 ml-2 tracking-widest uppercase">Dashboard</span>
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Unified virtual sparsebundle mount & path sync control center.</p>
+            </div>
+            
+            <!-- Docker/Host mode indicator -->
+            <div class="flex items-center gap-3">
+                <span id="env-badge" class="px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-white/10 glass-card">
+                    Detecting Environment...
+                </span>
+            </div>
+        </header>
+
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Disk Status & Actions -->
+            <div class="lg:col-span-1 flex flex-col gap-8">
+                
+                <!-- Status Card -->
+                <section class="glass-card rounded-3xl p-6 flex flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold tracking-wide text-slate-300">Disk Status</h2>
+                        <div class="flex items-center gap-2">
+                            <span id="status-text" class="text-xs uppercase tracking-widest font-semibold">Offline</span>
+                            <span id="status-dot" class="w-3.5 h-3.5 rounded-full bg-red-500 pulse-offline"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Space Gauge -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Storage Usage</span>
+                            <span id="percent-used">0%</span>
+                        </div>
+                        <div class="w-full h-3.5 bg-black/40 rounded-full overflow-hidden border border-white/5 p-0.5">
+                            <div id="space-bar" class="h-full rounded-full bg-gradient-to-r from-yellow-500 via-amber-500 to-rose-500 transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-500 mt-1 font-mono">
+                            <span id="used-space">0 GB used</span>
+                            <span id="total-space">0 GB total</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-white/5 pt-4 flex flex-col gap-2 text-xs text-slate-400">
+                        <div class="flex justify-between"><span class="font-light">Mount Point:</span> <span id="mount-path" class="font-mono">/Volumes/OmniDrive</span></div>
+                        <div class="flex justify-between"><span class="font-light">Image:</span> <span id="image-name" class="font-mono text-right truncate max-w-[180px]">OmniDrive_Jack.sparsebundle</span></div>
+                    </div>
+                </section>
+
+                <!-- Actions Card -->
+                <section class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+                    <h2 class="text-lg font-semibold text-slate-300 mb-2">Control Operations</h2>
+                    
+                    <button id="btn-mount" onclick="executeAction('/api/mount')" class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold rounded-2xl transition duration-300 transform active:scale-98 shadow-xl flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Mount Virtual Disk
+                    </button>
+                    
+                    <button id="btn-unmount" onclick="executeAction('/api/unmount')" class="w-full py-3.5 px-4 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white font-bold rounded-2xl transition duration-300 transform active:scale-98 shadow-xl flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-stop"></i> Unmount Disk
+                    </button>
+                    
+                    <button id="btn-link" onclick="executeAction('/api/link')" class="w-full py-3.5 px-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-bold rounded-2xl transition duration-300 transform active:scale-98 shadow-xl flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wrench"></i> Repair Symlinks
+                    </button>
+                </section>
+            </div>
+
+            <!-- Right Column: Symlinks Health & File Browser -->
+            <div class="lg:col-span-2 flex flex-col gap-8">
+                
+                <!-- Symlinks Health Card -->
+                <section class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+                    <h2 class="text-lg font-semibold tracking-wide text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-link text-yellow-400"></i> Unified Paths & Symlinks
+                    </h2>
+                    
+                    <div id="symlinks-list" class="flex flex-col gap-3">
+                        <!-- Loaded dynamically -->
+                        <div class="text-slate-500 text-sm py-4 text-center">Loading paths...</div>
+                    </div>
+                </section>
+
+                <!-- File Explorer Card -->
+                <section class="glass-card rounded-3xl p-6 flex flex-col gap-4">
+                    <h2 class="text-lg font-semibold tracking-wide text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-open text-yellow-400"></i> File Explorer (Virtual Root)
+                    </h2>
+                    
+                    <div class="bg-black/40 rounded-2xl border border-white/5 max-h-[300px] overflow-y-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-white/5 text-slate-400 border-b border-white/5 font-mono">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Name</th>
+                                    <th scope="col" class="px-6 py-3">Type</th>
+                                    <th scope="col" class="px-6 py-3">Size</th>
+                                </tr>
+                            </thead>
+                            <tbody id="files-list">
+                                <!-- Loaded dynamically -->
+                                <tr>
+                                    <td colspan="3" class="px-6 py-8 text-center text-slate-500">Disk is offline. Mount to view files.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- CLI Output/Console Log Box -->
+        <section class="glass-card rounded-3xl p-6 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">System Log Console</h2>
+                <button onclick="clearConsole()" class="text-xs text-yellow-400/70 hover:text-yellow-400 transition">Clear Console</button>
+            </div>
+            <div id="console-output" class="bg-black/60 rounded-2xl border border-white/5 p-4 h-32 overflow-y-auto font-mono text-xs text-yellow-400/90 flex flex-col gap-1">
+                <div>[SYSTEM] Console initialized. Ready to execute commands.</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-6 text-center text-xs text-slate-500 max-w-6xl mx-auto w-full px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>상호: 제이케이유니버스 (j1010red) | CEO: 김재관 | 사업자등록번호: 304-15-34046</div>
+        <div>POWERED BY <span class="text-yellow-500/80 font-bold">JK UNIVERSE</span> &nbsp;•&nbsp; github.com/encredible</div>
+    </footer>
+
+    <script>
+        const consoleEl = document.getElementById('console-output');
+
+        function writeLog(message, type = 'INFO') {
+            const time = new Date().toLocaleTimeString();
+            const logLine = document.createElement('div');
+            
+            let color = 'text-yellow-400/90';
+            if (type === 'ERROR') color = 'text-rose-500';
+            if (type === 'SUCCESS') color = 'text-emerald-400';
+            
+            logLine.innerHTML = `<span class="text-slate-600">[${time}]</span> <span class="${color}">[${type}] ${message}</span>`;
+            consoleEl.appendChild(logLine);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole() {
+            consoleEl.innerHTML = '';
+            writeLog("Console cleared.");
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                // Update Environment Badge
+                const envBadge = document.getElementById('env-badge');
+                if (data.docker_mode) {
+                    envBadge.textContent = "🐳 Docker Mode";
+                    envBadge.className = "px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-blue-500/20 bg-blue-950/40 text-blue-300";
+                } else {
+                    envBadge.textContent = "💻 Host Native Mode";
+                    envBadge.className = "px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase border border-emerald-500/20 bg-emerald-950/40 text-emerald-300";
+                }
+                
+                // Update status dot/text
+                const statusDot = document.getElementById('status-dot');
+                const statusText = document.getElementById('status-text');
+                
+                if (data.mounted) {
+                    statusDot.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 pulse-online";
+                    statusText.textContent = "Online";
+                    statusText.className = "text-xs uppercase tracking-widest font-semibold text-emerald-400";
+                } else {
+                    statusDot.className = "w-3.5 h-3.5 rounded-full bg-red-500 pulse-offline";
+                    statusText.textContent = "Offline";
+                    statusText.className = "text-xs uppercase tracking-widest font-semibold text-red-500";
+                }
+                
+                // Update paths
+                document.getElementById('mount-path').textContent = data.mount_point;
+                document.getElementById('image-name').textContent = data.image_path.split('/').pop();
+                
+                // Update capacity
+                document.getElementById('percent-used').textContent = `${data.capacity.percent}%`;
+                document.getElementById('space-bar').style.width = `${data.capacity.percent}%`;
+                document.getElementById('used-space').textContent = `${data.capacity.used} used`;
+                document.getElementById('total-space').textContent = `${data.capacity.total} total`;
+                
+                // Update Symlinks List
+                const linksList = document.getElementById('symlinks-list');
+                linksList.innerHTML = '';
+                
+                if (data.symlinks.length === 0) {
+                    linksList.innerHTML = '<div class="text-slate-500 text-sm py-4 text-center">No symlinks configured.</div>';
+                }
+                
+                data.symlinks.forEach(link => {
+                    let statusClass = "border-red-500/20 bg-red-950/10 text-red-400";
+                    let statusIcon = '<i class="fa-solid fa-circle-xmark"></i>';
+                    let statusLabel = "Offline/Broken";
+                    
+                    if (link.status === 'valid') {
+                        statusClass = "border-emerald-500/20 bg-emerald-950/10 text-emerald-400";
+                        statusIcon = '<i class="fa-solid fa-circle-check"></i>';
+                        statusLabel = "Valid";
+                    } else if (link.status === 'broken') {
+                        statusClass = "border-rose-500/20 bg-rose-950/10 text-rose-400";
+                        statusIcon = '<i class="fa-solid fa-circle-exclamation"></i>';
+                        statusLabel = "Broken Link";
+                    } else if (link.status === 'missing') {
+                        statusClass = "border-amber-500/20 bg-amber-950/10 text-amber-400";
+                        statusIcon = '<i class="fa-solid fa-circle-question"></i>';
+                        statusLabel = "Unlinked";
+                    }
+                    
+                    const linkRow = `
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl border border-white/5 bg-white/2 gap-3 transition hover:bg-white/[0.04]">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-slate-200 text-sm">${link.name}</span>
+                                <span class="text-xs text-slate-500 font-mono mt-0.5 truncate max-w-[320px] md:max-w-[450px]" title="${link.resolved}">${link.resolved}</span>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 border ${statusClass}">
+                                ${statusIcon} ${statusLabel}
+                            </span>
+                        </div>
+                    `;
+                    linksList.insertAdjacentHTML('beforeend', linkRow);
+                });
+                
+                // Fetch files if mounted
+                if (data.mounted) {
+                    fetchFiles();
+                } else {
+                    document.getElementById('files-list').innerHTML = `
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-slate-500">Disk is offline. Mount to view files.</td>
+                        </tr>
+                    `;
+                }
+                
+            } catch (error) {
+                writeLog(`Failed to sync state: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function fetchFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                const filesList = document.getElementById('files-list');
+                filesList.innerHTML = '';
+                
+                if (data.files.length === 0) {
+                    filesList.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-slate-500">No files found inside virtual storage.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                data.files.forEach(file => {
+                    const icon = file.is_dir 
+                        ? '<i class="fa-solid fa-folder text-yellow-500 mr-2"></i>' 
+                        : file.is_symlink 
+                            ? '<i class="fa-solid fa-link text-indigo-400 mr-2"></i>' 
+                            : '<i class="fa-solid fa-file-lines text-slate-400 mr-2"></i>';
+                            
+                    const row = `
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] transition font-mono text-xs">
+                            <td class="px-6 py-3.5 flex items-center font-medium text-slate-300">
+                                ${icon} ${file.name}
+                            </td>
+                            <td class="px-6 py-3.5 text-slate-500">
+                                ${file.is_dir ? 'Directory' : file.is_symlink ? 'Symlink' : 'File'}
+                            </td>
+                            <td class="px-6 py-3.5 text-slate-400 text-right">
+                                ${file.size}
+                            </td>
+                        </tr>
+                    `;
+                    filesList.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (error) {
+                console.error("Failed to load files", error);
+            }
+        }
+
+        async function executeAction(endpoint) {
+            const actionName = endpoint.split('/').pop().toUpperCase();
+            writeLog(`Initiating ${actionName} transaction...`, 'INFO');
+            
+            try {
+                const response = await fetch(endpoint, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    writeLog(result.message, 'SUCCESS');
+                    fetchStatus();
+                } else {
+                    writeLog(result.message, 'ERROR');
+                }
+            } catch (error) {
+                writeLog(`Transaction failed: ${error.message}`, 'ERROR');
+            }
+        }
+
+        // Initialize and poll every 5 seconds
+        window.onload = () => {
+            fetchStatus();
+            setInterval(fetchStatus, 5000);
+        };
+    </script>
+</body>
+</html>
